@@ -1,0 +1,138 @@
+/* Custom styles to complement Bootstrap */
+
+/* Overall styling */
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.main-content {
+    flex: 1;
+}
+
+/* Hero section */
+.hero-section {
+    background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('https://source.unsplash.com/1600x900/?train,railway');
+    background-size: cover;
+    background-position: center;
+    color: white;
+    padding: 5rem 0;
+    margin-bottom: 2rem;
+}
+
+/* Train card */
+.train-card {
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.train-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Station info */
+.station-info {
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+}
+
+/* Schedule search form */
+.schedule-search-form {
+    background-color: var(--bs-dark-bg-subtle);
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+}
+
+/* Ticket card */
+.ticket-card {
+    border-left: 5px solid var(--bs-primary);
+    margin-bottom: 1rem;
+}
+
+.ticket-confirmed {
+    border-left-color: var(--bs-success);
+}
+
+.ticket-cancelled {
+    border-left-color: var(--bs-danger);
+}
+
+.ticket-waiting {
+    border-left-color: var(--bs-warning);
+}
+
+/* Admin dashboard cards */
+.dashboard-card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Status indicators */
+.status-on-time {
+    color: var(--bs-success);
+}
+
+.status-delayed {
+    color: var(--bs-warning);
+}
+
+.status-cancelled {
+    color: var(--bs-danger);
+}
+
+/* Timeline for journey */
+.journey-timeline {
+    position: relative;
+    padding-left: 20px;
+}
+
+.journey-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 2px;
+    height: 100%;
+    background-color: var(--bs-primary);
+}
+
+.journey-station {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.journey-station::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: var(--bs-primary);
+}
+
+/* Form styling */
+.form-control:focus {
+    border-color: var(--bs-primary);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-primary-rgb), 0.25);
+}
+
+/* Footer styling */
+footer {
+    margin-top: auto;
+    padding: 2rem 0;
+    background-color: var(--bs-dark-bg-subtle);
+}

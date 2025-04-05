@@ -1,0 +1,324 @@
+{% extends "layout.html" %}
+
+{% block title %} - Manage Stations{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0"><i class="fas fa-building me-2"></i>Manage Stations</h3>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addStationModal">
+                        <i class="fas fa-plus me-2"></i>Add New Station
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchTable" placeholder="Search stations...">
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex justify-content-md-end">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Filter by State
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item state-filter" href="#" data-state="all">All States</a></li>
+                                    <!-- States would be dynamically populated here -->
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item state-filter" href="#" data-state="Maharashtra">Maharashtra</a></li>
+                                    <li><a class="dropdown-item state-filter" href="#" data-state="Delhi">Delhi</a></li>
+                                    <li><a class="dropdown-item state-filter" href="#" data-state="Tamil Nadu">Tamil Nadu</a></li>
+                                    <li><a class="dropdown-item state-filter" href="#" data-state="Karnataka">Karnataka</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stations Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th data-sort="id">#</th>
+                                    <th data-sort="name">Station Name</th>
+                                    <th data-sort="code">Code</th>
+                                    <th data-sort="city">City</th>
+                                    <th data-sort="state">State</th>
+                                    <th data-sort="platforms">Platforms</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for station in stations %}
+                                <tr data-state="{{ station.state }}">
+                                    <td>{{ station.id }}</td>
+                                    <td>{{ station.name }}</td>
+                                    <td>{{ station.code }}</td>
+                                    <td>{{ station.city }}</td>
+                                    <td>{{ station.state }}</td>
+                                    <td>{{ station.platforms }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary edit-station-btn"
+                                                data-bs-toggle="modal" data-bs-target="#editStationModal"
+                                                data-id="{{ station.id }}"
+                                                data-name="{{ station.name }}"
+                                                data-code="{{ station.code }}"
+                                                data-city="{{ station.city }}"
+                                                data-state="{{ station.state }}"
+                                                data-address="{{ station.address }}"
+                                                data-platforms="{{ station.platforms }}"
+                                                data-facilities="{{ station.facilities }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-btn"
+                                                data-bs-toggle="modal" data-bs-target="#deleteStationModal"
+                                                data-id="{{ station.id }}"
+                                                data-name="{{ station.name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Station Modal -->
+<div class="modal fade" id="addStationModal" tabindex="-1" aria-labelledby="addStationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addStationModalLabel">Add New Station</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="stationForm" action="{{ url_for('admin_stations') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Station Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                        <div id="name-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Station Code</label>
+                        <input type="text" class="form-control" id="code" name="code" maxlength="5" required>
+                        <div id="code-error" class="invalid-feedback"></div>
+                        <small class="form-text text-muted">2-5 characters, uppercase letters only</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" name="city" required>
+                            <div id="city-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="state" class="form-label">State</label>
+                            <input type="text" class="form-control" id="state" name="state" required>
+                            <div id="state-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="2" required></textarea>
+                        <div id="address-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="platforms" class="form-label">Number of Platforms</label>
+                        <input type="number" class="form-control" id="platforms" name="platforms" min="1" value="1" required>
+                        <div id="platforms-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="facilities" class="form-label">Facilities</label>
+                        <textarea class="form-control" id="facilities" name="facilities" rows="3" placeholder="Waiting Room, Food Court, ATM, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Station</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Station Modal -->
+<div class="modal fade" id="editStationModal" tabindex="-1" aria-labelledby="editStationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editStationModalLabel">Edit Station</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editStationForm" action="{{ url_for('admin_stations') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" id="edit_station_id" name="station_id">
+                    
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Station Name</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                        <div id="edit_name-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_code" class="form-label">Station Code</label>
+                        <input type="text" class="form-control" id="edit_code" name="code" maxlength="5" required>
+                        <div id="edit_code-error" class="invalid-feedback"></div>
+                        <small class="form-text text-muted">2-5 characters, uppercase letters only</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="edit_city" name="city" required>
+                            <div id="edit_city-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_state" class="form-label">State</label>
+                            <input type="text" class="form-control" id="edit_state" name="state" required>
+                            <div id="edit_state-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_address" class="form-label">Address</label>
+                        <textarea class="form-control" id="edit_address" name="address" rows="2" required></textarea>
+                        <div id="edit_address-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_platforms" class="form-label">Number of Platforms</label>
+                        <input type="number" class="form-control" id="edit_platforms" name="platforms" min="1" required>
+                        <div id="edit_platforms-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_facilities" class="form-label">Facilities</label>
+                        <textarea class="form-control" id="edit_facilities" name="facilities" rows="3" placeholder="Waiting Room, Food Court, ATM, etc."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Station Modal -->
+<div class="modal fade" id="deleteStationModal" tabindex="-1" aria-labelledby="deleteStationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteStationModalLabel">Delete Station</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the station <strong id="delete_station_name"></strong>?</p>
+                <p class="text-danger">This action cannot be undone. Any schedules associated with this station will be affected.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin_stations') }}" method="post">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" id="delete_station_id" name="station_id">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize edit station modal
+        const editButtons = document.querySelectorAll('.edit-station-btn');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                const code = this.getAttribute('data-code');
+                const city = this.getAttribute('data-city');
+                const state = this.getAttribute('data-state');
+                const address = this.getAttribute('data-address');
+                const platforms = this.getAttribute('data-platforms');
+                const facilities = this.getAttribute('data-facilities');
+                
+                document.getElementById('edit_station_id').value = id;
+                document.getElementById('edit_name').value = name;
+                document.getElementById('edit_code').value = code;
+                document.getElementById('edit_city').value = city;
+                document.getElementById('edit_state').value = state;
+                document.getElementById('edit_address').value = address;
+                document.getElementById('edit_platforms').value = platforms;
+                document.getElementById('edit_facilities').value = facilities;
+            });
+        });
+        
+        // Initialize delete station modal
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                
+                document.getElementById('delete_station_id').value = id;
+                document.getElementById('delete_station_name').textContent = name;
+            });
+        });
+        
+        // State filter functionality
+        const stateFilters = document.querySelectorAll('.state-filter');
+        stateFilters.forEach(filter => {
+            filter.addEventListener('click', function(e) {
+                e.preventDefault();
+                const state = this.getAttribute('data-state');
+                const rows = document.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    if (state === 'all') {
+                        row.style.display = '';
+                    } else {
+                        const rowState = row.getAttribute('data-state');
+                        if (rowState === state) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+        
+        // Uppercase station code input
+        const codeInputs = document.querySelectorAll('#code, #edit_code');
+        codeInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                this.value = this.value.toUpperCase();
+            });
+        });
+    });
+</script>
+{% endblock %}

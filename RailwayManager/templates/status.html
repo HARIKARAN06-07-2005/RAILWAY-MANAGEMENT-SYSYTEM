@@ -1,0 +1,169 @@
+{% extends "layout.html" %}
+
+{% block title %} - Train Status{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-info-circle me-2"></i>Train Status</h3>
+                </div>
+                <div class="card-body">
+                    {% if not ticket %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-ticket-alt fa-4x mb-3 text-muted"></i>
+                        <h4 class="mb-4">Check your ticket status</h4>
+                        <form id="pnrForm" action="{{ url_for('status') }}" method="post">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8">
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" class="form-control" id="pnr" name="pnr" placeholder="Enter PNR Number" required>
+                                        <button type="submit" class="btn btn-primary">Check Status</button>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        PNR is a 10-character code found on your ticket confirmation.
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    {% else %}
+                    <div class="ticket-details">
+                        <div class="card-header bg-light mb-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4 class="mb-0">Ticket Information</h4>
+                                <span class="badge {% if ticket.status == 'Confirmed' %}bg-success{% elif ticket.status == 'Waiting' %}bg-warning{% else %}bg-danger{% endif %} px-3 py-2">
+                                    {{ ticket.status }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">PNR Details</h5>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">PNR Number:</span>
+                                            <strong>{{ ticket.pnr }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Booking Date:</span>
+                                            <span>{{ format_date(ticket.booking_time) }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Journey Date:</span>
+                                            <span>{{ format_date(ticket.journey_date) }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-0">
+                                            <span class="text-muted">Fare:</span>
+                                            <strong>₹{{ ticket.fare }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Passenger Details</h5>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Name:</span>
+                                            <strong>{{ ticket.passenger_name }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Age:</span>
+                                            <span>{{ ticket.passenger_age }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted">Gender:</span>
+                                            <span>{{ ticket.passenger_gender }}</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-0">
+                                            <span class="text-muted">Seat:</span>
+                                            <strong>{{ ticket.coach }}-{{ ticket.seat_number }}</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <h5 class="card-title">Journey Details</h5>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="journey-timeline mb-3">
+                                            <div class="journey-station">
+                                                <div class="d-flex justify-content-between">
+                                                    <div>
+                                                        <strong>{{ ticket.schedule.departure_station.name }} ({{ ticket.schedule.departure_station.code }})</strong>
+                                                        <p class="mb-0 text-muted">{{ ticket.schedule.departure_station.city }}, {{ ticket.schedule.departure_station.state }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ format_time(ticket.schedule.departure_time) }}</strong>
+                                                        <p class="mb-0 text-muted">{{ format_date(ticket.schedule.departure_time) }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="journey-station">
+                                                <div class="d-flex justify-content-between">
+                                                    <div>
+                                                        <strong>{{ ticket.schedule.arrival_station.name }} ({{ ticket.schedule.arrival_station.code }})</strong>
+                                                        <p class="mb-0 text-muted">{{ ticket.schedule.arrival_station.city }}, {{ ticket.schedule.arrival_station.state }}</p>
+                                                    </div>
+                                                    <div>
+                                                        <strong>{{ format_time(ticket.schedule.arrival_time) }}</strong>
+                                                        <p class="mb-0 text-muted">{{ format_date(ticket.schedule.arrival_time) }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p class="mb-1"><strong>Train:</strong> {{ ticket.schedule.train.name }}</p>
+                                        <p class="mb-0"><strong>Train No:</strong> {{ ticket.schedule.train.train_number }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="mb-1"><strong>Distance:</strong> {{ ticket.schedule.distance }} km</p>
+                                        <p class="mb-0"><strong>Platform:</strong> {{ ticket.schedule.platform }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p class="mb-1"><strong>Status:</strong> 
+                                            {% if ticket.schedule.status == 'On Time' %}
+                                            <span class="badge bg-success">{{ ticket.schedule.status }}</span>
+                                            {% elif ticket.schedule.status == 'Delayed' %}
+                                            <span class="badge bg-warning">{{ ticket.schedule.status }} ({{ ticket.schedule.delay_minutes }} mins)</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">{{ ticket.schedule.status }}</span>
+                                            {% endif %}
+                                        </p>
+                                        <p class="mb-0"><strong>Duration:</strong> {{ (ticket.schedule.arrival_time - ticket.schedule.departure_time).seconds // 60 // 60 }}h {{ ((ticket.schedule.arrival_time - ticket.schedule.departure_time).seconds // 60) % 60 }}m</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <a href="{{ url_for('status') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-search me-2"></i>Check Another Ticket
+                            </a>
+                            {% if current_user.is_authenticated and current_user.id == ticket.user_id %}
+                            <a href="{{ url_for('profile') }}" class="btn btn-primary">
+                                <i class="fas fa-user me-2"></i>Go to My Profile
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

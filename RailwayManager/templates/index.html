@@ -1,0 +1,238 @@
+{% extends "layout.html" %}
+
+{% block title %} - Home{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center">
+    <div class="container">
+        <h1 class="display-4 mb-4">Welcome to Railway Management System</h1>
+        <p class="lead mb-4">Book tickets, check schedules, and track trains - all in one place.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ url_for('schedule') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-search me-2"></i>Find Trains
+            </a>
+            <a href="{{ url_for('status') }}" class="btn btn-outline-light btn-lg">
+                <i class="fas fa-info-circle me-2"></i>Check Status
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Quick Search Section -->
+    <div class="card mb-4 schedule-search-form">
+        <div class="card-body">
+            <h3 class="card-title mb-4">Quick Search</h3>
+            <form action="{{ url_for('schedule') }}" method="get" id="searchForm">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label for="from" class="form-label">From Station</label>
+                        <select class="form-select" id="from" name="from" required>
+                            <option value="" selected disabled>Select departure station</option>
+                            {% for station in stations %}
+                            <option value="{{ station.id }}">{{ station.name }} ({{ station.code }})</option>
+                            {% endfor %}
+                        </select>
+                        <div id="from-error" class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="to" class="form-label">To Station</label>
+                        <select class="form-select" id="to" name="to" required>
+                            <option value="" selected disabled>Select arrival station</option>
+                            {% for station in stations %}
+                            <option value="{{ station.id }}">{{ station.name }} ({{ station.code }})</option>
+                            {% endfor %}
+                        </select>
+                        <div id="to-error" class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="date" class="form-label">Journey Date</label>
+                        <input type="date" class="form-control" id="date" name="date" required>
+                        <div id="date-error" class="invalid-feedback"></div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-2"></i>Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Featured Sections -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <i class="fas fa-ticket-alt me-2 text-primary"></i>Easy Booking
+                    </h3>
+                    <p class="card-text">Book your train tickets in just a few clicks. Easy, fast, and secure booking process.</p>
+                    <a href="{{ url_for('schedule') }}" class="btn btn-outline-primary">Book Now</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <i class="fas fa-calendar-alt me-2 text-success"></i>Train Schedules
+                    </h3>
+                    <p class="card-text">Access real-time train schedules, departure and arrival times for all stations.</p>
+                    <a href="{{ url_for('schedule') }}" class="btn btn-outline-success">Check Schedules</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h3 class="card-title">
+                        <i class="fas fa-map-marker-alt me-2 text-danger"></i>Station Info
+                    </h3>
+                    <p class="card-text">Find details about all railway stations including amenities and facilities.</p>
+                    <a href="{{ url_for('stations') }}" class="btn btn-outline-danger">View Stations</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upcoming Schedules Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0">Upcoming Departures</h3>
+                    <a href="{{ url_for('schedule') }}" class="btn btn-sm btn-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_schedules %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Train</th>
+                                    <th>Route</th>
+                                    <th>Departure</th>
+                                    <th>Arrival</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in upcoming_schedules %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ schedule.train.name }}</strong><br>
+                                        <small class="text-muted">{{ schedule.train.train_number }}</small>
+                                    </td>
+                                    <td>
+                                        {{ schedule.departure_station.name }} ({{ schedule.departure_station.code }})
+                                        <i class="fas fa-arrow-right mx-1"></i>
+                                        {{ schedule.arrival_station.name }} ({{ schedule.arrival_station.code }})
+                                    </td>
+                                    <td>
+                                        {{ format_date(schedule.departure_time) }}<br>
+                                        <strong>{{ format_time(schedule.departure_time) }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ format_date(schedule.arrival_time) }}<br>
+                                        <strong>{{ format_time(schedule.arrival_time) }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if schedule.status == 'On Time' %}
+                                        <span class="badge bg-success">{{ schedule.status }}</span>
+                                        {% elif schedule.status == 'Delayed' %}
+                                        <span class="badge bg-warning">{{ schedule.status }} ({{ schedule.delay_minutes }} mins)</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">{{ schedule.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('booking', schedule_id=schedule.id) }}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-ticket-alt me-1"></i>Book
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
+                        <h5>No upcoming schedules available</h5>
+                        <p class="text-muted">Check back later for updates on train schedules.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Our Services</h2>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-search fa-3x mb-3 text-primary"></i>
+                    <h4 class="card-title">Search Trains</h4>
+                    <p class="card-text">Find the best trains for your journey with our advanced search options.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-ticket-alt fa-3x mb-3 text-success"></i>
+                    <h4 class="card-title">Book Tickets</h4>
+                    <p class="card-text">Secure online booking with instant confirmation and e-tickets.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-3x mb-3 text-warning"></i>
+                    <h4 class="card-title">Live Status</h4>
+                    <p class="card-text">Track your train in real-time with accurate status updates.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-user-shield fa-3x mb-3 text-danger"></i>
+                    <h4 class="card-title">Secure Travel</h4>
+                    <p class="card-text">Safe and secure travel with adherence to all safety protocols.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="card bg-primary text-white mb-4">
+        <div class="card-body text-center py-4">
+            <h2 class="card-title mb-3">Ready to start your journey?</h2>
+            <p class="card-text mb-4">Create an account to book tickets, save your preferences, and get travel updates.</p>
+            {% if not current_user.is_authenticated %}
+            <div class="d-flex justify-content-center gap-3">
+                <a href="{{ url_for('register') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>Register Now
+                </a>
+                <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i>Login
+                </a>
+            </div>
+            {% else %}
+            <a href="{{ url_for('schedule') }}" class="btn btn-light btn-lg">
+                <i class="fas fa-search me-2"></i>Find Trains
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,323 @@
+{% extends "layout.html" %}
+
+{% block title %} - Reports{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Reports</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Date Range Selector -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <form id="dateRangeForm" class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="start_date" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="start_date" name="start_date">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="end_date" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="end_date" name="end_date">
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <button type="submit" class="btn btn-primary w-100">Apply Filter</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-4 d-flex justify-content-end align-items-end">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Export Report
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">Export as CSV</a></li>
+                                    <li><a class="dropdown-item" href="#">Export as Excel</a></li>
+                                    <li><a class="dropdown-item" href="#">Export as PDF</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card dashboard-card bg-info text-white mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Total Tickets (Last 7 Days)</h6>
+                                            <h2 class="display-6 mb-0">{{ tickets_last_week }}</h2>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-ticket-alt fa-3x opacity-50"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card dashboard-card bg-success text-white mb-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Total Revenue (Last 7 Days)</h6>
+                                            <h2 class="display-6 mb-0">₹{{ revenue_last_week }}</h2>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-money-bill-wave fa-3x opacity-50"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Row -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Tickets Sold (Last 7 Days)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="ticketsChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Revenue (Last 7 Days)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="revenueChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Popular Routes Table -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Most Popular Routes</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if popular_routes %}
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Route</th>
+                                                    <th>Tickets Sold</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for route in popular_routes %}
+                                                <tr>
+                                                    <td>{{ route.departure_station }} → {{ route.arrival_station }}</td>
+                                                    <td>{{ route.ticket_count }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-info">
+                                        No data available for popular routes.
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Busiest Trains Table -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Busiest Trains</h5>
+                                </div>
+                                <div class="card-body">
+                                    {% if busiest_trains %}
+                                    <div class="table-responsive">
+                                        <table class="table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Train</th>
+                                                    <th>Tickets Sold</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for train in busiest_trains %}
+                                                <tr>
+                                                    <td>{{ train.name }} ({{ train.train_number }})</td>
+                                                    <td>{{ train.ticket_count }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="alert alert-info">
+                                        No data available for busiest trains.
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Booking Status Distribution -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Booking Status Distribution</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="statusChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Monthly Revenue Trend -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Monthly Revenue Trend</h5>
+                                </div>
+                                <div class="card-body">
+                                    <canvas id="monthlyRevenueChart" height="250"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default date range (last 7 days)
+        const today = new Date();
+        const lastWeek = new Date(today);
+        lastWeek.setDate(lastWeek.getDate() - 7);
+        
+        document.getElementById('end_date').valueAsDate = today;
+        document.getElementById('start_date').valueAsDate = lastWeek;
+        
+        // Tickets Chart
+        const ticketsChartCtx = document.getElementById('ticketsChart').getContext('2d');
+        const ticketsChart = new Chart(ticketsChartCtx, {
+            type: 'bar',
+            data: {
+                labels: ['7 Days Ago', '6 Days Ago', '5 Days Ago', '4 Days Ago', '3 Days Ago', '2 Days Ago', 'Yesterday'],
+                datasets: [{
+                    label: 'Tickets Sold',
+                    data: [12, 19, 8, 15, 20, 17, 10],
+                    backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                    borderColor: 'rgba(13, 110, 253, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Revenue Chart
+        const revenueChartCtx = document.getElementById('revenueChart').getContext('2d');
+        const revenueChart = new Chart(revenueChartCtx, {
+            type: 'line',
+            data: {
+                labels: ['7 Days Ago', '6 Days Ago', '5 Days Ago', '4 Days Ago', '3 Days Ago', '2 Days Ago', 'Yesterday'],
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: [5000, 7500, 3200, 6000, 8000, 6800, 4000],
+                    backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                    borderColor: 'rgba(25, 135, 84, 1)',
+                    borderWidth: 2,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Status Chart
+        const statusChartCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusChartCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Confirmed', 'Waiting', 'Cancelled'],
+                datasets: [{
+                    data: [70, 15, 15],
+                    backgroundColor: [
+                        'rgba(25, 135, 84, 0.7)',
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(25, 135, 84, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true
+            }
+        });
+        
+        // Monthly Revenue Chart
+        const monthlyRevenueChartCtx = document.getElementById('monthlyRevenueChart').getContext('2d');
+        const monthlyRevenueChart = new Chart(monthlyRevenueChartCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Revenue (₹)',
+                    data: [20000, 25000, 30000, 22000, 18000, 24000, 35000, 40000, 38000, 42000, 32000, 28000],
+                    backgroundColor: 'rgba(111, 66, 193, 0.7)',
+                    borderColor: 'rgba(111, 66, 193, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        
+        // Date range form submission
+        document.getElementById('dateRangeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // This would normally send an AJAX request to get filtered data
+            alert('Date range filter would be applied here with an AJAX request.');
+        });
+    });
+</script>
+{% endblock %}

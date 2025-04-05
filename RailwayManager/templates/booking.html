@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+
+{% block title %} - Book Ticket{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-ticket-alt me-2"></i>Book Your Ticket</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <div class="card train-card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <h4>{{ schedule.train.name }}</h4>
+                                            <p class="text-muted mb-0">{{ schedule.train.train_number }}</p>
+                                        </div>
+                                        <div class="col-md-5">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <div>
+                                                    <p class="mb-0"><strong>{{ format_time(schedule.departure_time) }}</strong></p>
+                                                    <p class="mb-0">{{ schedule.departure_station.name }}</p>
+                                                    <small>Platform: {{ schedule.platform }}</small>
+                                                </div>
+                                                <div class="px-3">
+                                                    <i class="fas fa-arrow-right"></i>
+                                                </div>
+                                                <div>
+                                                    <p class="mb-0"><strong>{{ format_time(schedule.arrival_time) }}</strong></p>
+                                                    <p class="mb-0">{{ schedule.arrival_station.name }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between text-muted small">
+                                                <span>{{ format_date(schedule.departure_time) }}</span>
+                                                <span>{{ (schedule.arrival_time - schedule.departure_time).seconds // 60 // 60 }}h {{ ((schedule.arrival_time - schedule.departure_time).seconds // 60) % 60 }}m</span>
+                                                <span>{{ format_date(schedule.arrival_time) }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <p class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>{{ schedule.distance }} km</p>
+                                            <p class="mb-1"><i class="fas fa-chair me-2"></i>{{ schedule.available_seats }} available</p>
+                                            <p class="mb-0">
+                                                {% if schedule.status == 'On Time' %}
+                                                <span class="badge bg-success">{{ schedule.status }}</span>
+                                                {% elif schedule.status == 'Delayed' %}
+                                                <span class="badge bg-warning">{{ schedule.status }} ({{ schedule.delay_minutes }} mins)</span>
+                                                {% else %}
+                                                <span class="badge bg-danger">{{ schedule.status }}</span>
+                                                {% endif %}
+                                            </p>
+                                        </div>
+                                        <div class="col-md-2 text-md-end">
+                                            <h4 class="text-primary">₹{{ schedule.price }}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h4 class="mb-3">Passenger Information</h4>
+                            <form id="bookingForm" action="{{ url_for('booking', schedule_id=schedule.id) }}" method="post">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="passenger_name" class="form-label">Passenger Name</label>
+                                        <input type="text" class="form-control" id="passenger_name" name="passenger_name" 
+                                               value="{{ current_user.full_name }}" required>
+                                        <div id="passenger_name-error" class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <div class="col-md-3 mb-3">
+                                        <label for="passenger_age" class="form-label">Age</label>
+                                        <input type="number" class="form-control" id="passenger_age" name="passenger_age" min="1" max="120" required>
+                                        <div id="passenger_age-error" class="invalid-feedback"></div>
+                                    </div>
+                                    
+                                    <div class="col-md-3 mb-3">
+                                        <label for="passenger_gender" class="form-label">Gender</label>
+                                        <select class="form-select" id="passenger_gender" name="passenger_gender" required>
+                                            <option value="" selected disabled>Select</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <div id="passenger_gender-error" class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="journey_date" class="form-label">Journey Date</label>
+                                        <input type="date" class="form-control" id="journey_date" name="journey_date" 
+                                               value="{{ schedule.departure_time.strftime('%Y-%m-%d') }}" required>
+                                        <div id="journey_date-error" class="invalid-feedback"></div>
+                                    </div>
+                                </div>
+                                
+                                <hr class="my-4">
+                                
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg">
+                                        <i class="fas fa-ticket-alt me-2"></i>Confirm Booking
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Booking Summary</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Base Fare:</span>
+                                        <span>₹{{ schedule.price }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Service Charge:</span>
+                                        <span>₹{{ (schedule.price * 0.05)|round(2) }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>GST (5%):</span>
+                                        <span>₹{{ (schedule.price * 0.05)|round(2) }}</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between mb-0">
+                                        <strong>Total Amount:</strong>
+                                        <strong class="text-primary">₹{{ (schedule.price * 1.1)|round(2) }}</strong>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Your ticket will be confirmed immediately after booking.
+                                    </small>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-3">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Train Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="mb-2"><strong>Train:</strong> {{ schedule.train.name }} ({{ schedule.train.train_number }})</p>
+                                    <p class="mb-2"><strong>From:</strong> {{ schedule.departure_station.name }} ({{ schedule.departure_station.code }})</p>
+                                    <p class="mb-2"><strong>To:</strong> {{ schedule.arrival_station.name }} ({{ schedule.arrival_station.code }})</p>
+                                    <p class="mb-2"><strong>Departure:</strong> {{ format_date(schedule.departure_time) }}, {{ format_time(schedule.departure_time) }}</p>
+                                    <p class="mb-2"><strong>Arrival:</strong> {{ format_date(schedule.arrival_time) }}, {{ format_time(schedule.arrival_time) }}</p>
+                                    <p class="mb-2"><strong>Duration:</strong> {{ (schedule.arrival_time - schedule.departure_time).seconds // 60 // 60 }}h {{ ((schedule.arrival_time - schedule.departure_time).seconds // 60) % 60 }}m</p>
+                                    <p class="mb-0"><strong>Distance:</strong> {{ schedule.distance }} km</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

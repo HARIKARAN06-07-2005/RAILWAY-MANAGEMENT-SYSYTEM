@@ -1,0 +1,474 @@
+{% extends "layout.html" %}
+
+{% block title %} - Manage Schedules{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Manage Schedules</h3>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addScheduleModal">
+                        <i class="fas fa-plus me-2"></i>Add New Schedule
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchTable" placeholder="Search schedules...">
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex justify-content-md-end">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary active status-filter" data-status="all">All</button>
+                                <button type="button" class="btn btn-outline-success status-filter" data-status="On Time">On Time</button>
+                                <button type="button" class="btn btn-outline-warning status-filter" data-status="Delayed">Delayed</button>
+                                <button type="button" class="btn btn-outline-danger status-filter" data-status="Cancelled">Cancelled</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Schedules Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th data-sort="id">#</th>
+                                    <th data-sort="train">Train</th>
+                                    <th data-sort="route">Route</th>
+                                    <th data-sort="departure">Departure</th>
+                                    <th data-sort="arrival">Arrival</th>
+                                    <th data-sort="price">Price</th>
+                                    <th data-sort="seats">Available Seats</th>
+                                    <th data-sort="status">Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for schedule in schedules %}
+                                <tr data-status="{{ schedule.status }}">
+                                    <td>{{ schedule.id }}</td>
+                                    <td>
+                                        <strong>{{ schedule.train.name }}</strong><br>
+                                        <small class="text-muted">{{ schedule.train.train_number }}</small>
+                                    </td>
+                                    <td>
+                                        {{ schedule.departure_station.code }} → {{ schedule.arrival_station.code }}<br>
+                                        <small class="text-muted">{{ schedule.distance }} km</small>
+                                    </td>
+                                    <td>
+                                        {{ format_date(schedule.departure_time) }}<br>
+                                        <strong>{{ format_time(schedule.departure_time) }}</strong>
+                                    </td>
+                                    <td>
+                                        {{ format_date(schedule.arrival_time) }}<br>
+                                        <strong>{{ format_time(schedule.arrival_time) }}</strong>
+                                    </td>
+                                    <td>₹{{ schedule.price }}</td>
+                                    <td>{{ schedule.available_seats }}</td>
+                                    <td>
+                                        {% if schedule.status == 'On Time' %}
+                                        <span class="badge bg-success">{{ schedule.status }}</span>
+                                        {% elif schedule.status == 'Delayed' %}
+                                        <span class="badge bg-warning">{{ schedule.status }} ({{ schedule.delay_minutes }} mins)</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">{{ schedule.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary edit-schedule-btn"
+                                                data-bs-toggle="modal" data-bs-target="#editScheduleModal"
+                                                data-id="{{ schedule.id }}"
+                                                data-train-id="{{ schedule.train_id }}"
+                                                data-departure-station-id="{{ schedule.departure_station_id }}"
+                                                data-arrival-station-id="{{ schedule.arrival_station_id }}"
+                                                data-departure-time="{{ schedule.departure_time.strftime('%Y-%m-%dT%H:%M') }}"
+                                                data-arrival-time="{{ schedule.arrival_time.strftime('%Y-%m-%dT%H:%M') }}"
+                                                data-distance="{{ schedule.distance }}"
+                                                data-price="{{ schedule.price }}"
+                                                data-available-seats="{{ schedule.available_seats }}"
+                                                data-status="{{ schedule.status }}"
+                                                data-delay-minutes="{{ schedule.delay_minutes }}"
+                                                data-platform="{{ schedule.platform }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-btn"
+                                                data-bs-toggle="modal" data-bs-target="#deleteScheduleModal"
+                                                data-id="{{ schedule.id }}"
+                                                data-train-name="{{ schedule.train.name }}"
+                                                data-departure="{{ schedule.departure_station.code }}"
+                                                data-arrival="{{ schedule.arrival_station.code }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Schedule Modal -->
+<div class="modal fade" id="addScheduleModal" tabindex="-1" aria-labelledby="addScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addScheduleModalLabel">Add New Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="scheduleForm" action="{{ url_for('admin_schedules') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="train_id" class="form-label">Train</label>
+                            <select class="form-select" id="train_id" name="train_id" required>
+                                <option value="" selected disabled>Select a train</option>
+                                {% for train in trains %}
+                                <option value="{{ train.id }}">{{ train.name }} ({{ train.train_number }})</option>
+                                {% endfor %}
+                            </select>
+                            <div id="train_id-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="departure_station_id" class="form-label">Departure Station</label>
+                            <select class="form-select" id="departure_station_id" name="departure_station_id" required>
+                                <option value="" selected disabled>Select departure station</option>
+                                {% for station in stations %}
+                                <option value="{{ station.id }}">{{ station.name }} ({{ station.code }})</option>
+                                {% endfor %}
+                            </select>
+                            <div id="departure_station_id-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="arrival_station_id" class="form-label">Arrival Station</label>
+                            <select class="form-select" id="arrival_station_id" name="arrival_station_id" required>
+                                <option value="" selected disabled>Select arrival station</option>
+                                {% for station in stations %}
+                                <option value="{{ station.id }}">{{ station.name }} ({{ station.code }})</option>
+                                {% endfor %}
+                            </select>
+                            <div id="arrival_station_id-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="departure_time" class="form-label">Departure Time</label>
+                            <input type="datetime-local" class="form-control" id="departure_time" name="departure_time" required>
+                            <div id="departure_time-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="arrival_time" class="form-label">Arrival Time</label>
+                            <input type="datetime-local" class="form-control" id="arrival_time" name="arrival_time" required>
+                            <div id="arrival_time-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="distance" class="form-label">Distance (km)</label>
+                            <input type="number" class="form-control" id="distance" name="distance" min="1" required>
+                            <div id="distance-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="price" class="form-label">Price (₹)</label>
+                            <input type="number" class="form-control" id="price" name="price" min="1" step="0.01" required>
+                            <div id="price-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="available_seats" class="form-label">Available Seats</label>
+                            <input type="number" class="form-control" id="available_seats" name="available_seats" min="0" required>
+                            <div id="available_seats-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="platform" class="form-label">Platform</label>
+                            <input type="text" class="form-control" id="platform" name="platform" placeholder="e.g., 1A, 2B">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="status" class="form-label">Status</label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="On Time" selected>On Time</option>
+                                <option value="Delayed">Delayed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3" id="delay_minutes_container" style="display: none;">
+                            <label for="delay_minutes" class="form-label">Delay (minutes)</label>
+                            <input type="number" class="form-control" id="delay_minutes" name="delay_minutes" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Schedule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Schedule Modal -->
+<div class="modal fade" id="editScheduleModal" tabindex="-1" aria-labelledby="editScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editScheduleModalLabel">Edit Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editScheduleForm" action="{{ url_for('admin_schedules') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" id="edit_schedule_id" name="schedule_id">
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="edit_train_id" class="form-label">Train</label>
+                            <select class="form-select" id="edit_train_id" name="train_id" required>
+                                <option value="" disabled>Select a train</option>
+                                {% for train in trains %}
+                                <option value="{{ train.id }}">{{ train.name }} ({{ train.train_number }})</option>
+                                {% endfor %}
+                            </select>
+                            <div id="edit_train_id-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_departure_station_id" class="form-label">Departure Station</label>
+                            <select class="form-select" id="edit_departure_station_id" name="departure_station_id" required>
+                                <option value="" disabled>Select departure station</option>
+                                {% for station in stations %}
+                                <option value="{{ station.id }}">{{ station.name }} ({{ station.code }})</option>
+                                {% endfor %}
+                            </select>
+                            <div id="edit_departure_station_id-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_arrival_station_id" class="form-label">Arrival Station</label>
+                            <select class="form-select" id="edit_arrival_station_id" name="arrival_station_id" required>
+                                <option value="" disabled>Select arrival station</option>
+                                {% for station in stations %}
+                                <option value="{{ station.id }}">{{ station.name }} ({{ station.code }})</option>
+                                {% endfor %}
+                            </select>
+                            <div id="edit_arrival_station_id-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_departure_time" class="form-label">Departure Time</label>
+                            <input type="datetime-local" class="form-control" id="edit_departure_time" name="departure_time" required>
+                            <div id="edit_departure_time-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_arrival_time" class="form-label">Arrival Time</label>
+                            <input type="datetime-local" class="form-control" id="edit_arrival_time" name="arrival_time" required>
+                            <div id="edit_arrival_time-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="edit_distance" class="form-label">Distance (km)</label>
+                            <input type="number" class="form-control" id="edit_distance" name="distance" min="1" required>
+                            <div id="edit_distance-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="edit_price" class="form-label">Price (₹)</label>
+                            <input type="number" class="form-control" id="edit_price" name="price" min="1" step="0.01" required>
+                            <div id="edit_price-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="edit_available_seats" class="form-label">Available Seats</label>
+                            <input type="number" class="form-control" id="edit_available_seats" name="available_seats" min="0" required>
+                            <div id="edit_available_seats-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="edit_platform" class="form-label">Platform</label>
+                            <input type="text" class="form-control" id="edit_platform" name="platform" placeholder="e.g., 1A, 2B">
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <label for="edit_status" class="form-label">Status</label>
+                            <select class="form-select" id="edit_status" name="status" required>
+                                <option value="On Time">On Time</option>
+                                <option value="Delayed">Delayed</option>
+                                <option value="Cancelled">Cancelled</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3" id="edit_delay_minutes_container">
+                            <label for="edit_delay_minutes" class="form-label">Delay (minutes)</label>
+                            <input type="number" class="form-control" id="edit_delay_minutes" name="delay_minutes" min="0" value="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Schedule Modal -->
+<div class="modal fade" id="deleteScheduleModal" tabindex="-1" aria-labelledby="deleteScheduleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteScheduleModalLabel">Delete Schedule</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the schedule for train <strong id="delete_train_name"></strong> from <strong id="delete_departure"></strong> to <strong id="delete_arrival"></strong>?</p>
+                <p class="text-danger">This action cannot be undone. Any tickets booked for this schedule will be affected.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin_schedules') }}" method="post">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" id="delete_schedule_id" name="schedule_id">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show/hide delay minutes field based on status
+        const statusSelects = document.querySelectorAll('#status, #edit_status');
+        statusSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                const isAdd = this.id === 'status';
+                const container = document.getElementById(isAdd ? 'delay_minutes_container' : 'edit_delay_minutes_container');
+                
+                if (this.value === 'Delayed') {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                    document.getElementById(isAdd ? 'delay_minutes' : 'edit_delay_minutes').value = 0;
+                }
+            });
+        });
+        
+        // Initialize edit schedule modal
+        const editButtons = document.querySelectorAll('.edit-schedule-btn');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const trainId = this.getAttribute('data-train-id');
+                const departureStationId = this.getAttribute('data-departure-station-id');
+                const arrivalStationId = this.getAttribute('data-arrival-station-id');
+                const departureTime = this.getAttribute('data-departure-time');
+                const arrivalTime = this.getAttribute('data-arrival-time');
+                const distance = this.getAttribute('data-distance');
+                const price = this.getAttribute('data-price');
+                const availableSeats = this.getAttribute('data-available-seats');
+                const status = this.getAttribute('data-status');
+                const delayMinutes = this.getAttribute('data-delay-minutes');
+                const platform = this.getAttribute('data-platform');
+                
+                document.getElementById('edit_schedule_id').value = id;
+                document.getElementById('edit_train_id').value = trainId;
+                document.getElementById('edit_departure_station_id').value = departureStationId;
+                document.getElementById('edit_arrival_station_id').value = arrivalStationId;
+                document.getElementById('edit_departure_time').value = departureTime;
+                document.getElementById('edit_arrival_time').value = arrivalTime;
+                document.getElementById('edit_distance').value = distance;
+                document.getElementById('edit_price').value = price;
+                document.getElementById('edit_available_seats').value = availableSeats;
+                document.getElementById('edit_status').value = status;
+                document.getElementById('edit_delay_minutes').value = delayMinutes;
+                document.getElementById('edit_platform').value = platform;
+                
+                // Show/hide delay minutes field
+                const delayContainer = document.getElementById('edit_delay_minutes_container');
+                if (status === 'Delayed') {
+                    delayContainer.style.display = 'block';
+                } else {
+                    delayContainer.style.display = 'none';
+                }
+            });
+        });
+        
+        // Initialize delete schedule modal
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const trainName = this.getAttribute('data-train-name');
+                const departure = this.getAttribute('data-departure');
+                const arrival = this.getAttribute('data-arrival');
+                
+                document.getElementById('delete_schedule_id').value = id;
+                document.getElementById('delete_train_name').textContent = trainName;
+                document.getElementById('delete_departure').textContent = departure;
+                document.getElementById('delete_arrival').textContent = arrival;
+            });
+        });
+        
+        // Status filter functionality
+        const statusFilters = document.querySelectorAll('.status-filter');
+        statusFilters.forEach(filter => {
+            filter.addEventListener('click', function() {
+                const status = this.getAttribute('data-status');
+                const rows = document.querySelectorAll('tbody tr');
+                
+                // Remove active class from all buttons
+                statusFilters.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                rows.forEach(row => {
+                    if (status === 'all') {
+                        row.style.display = '';
+                    } else {
+                        const rowStatus = row.getAttribute('data-status');
+                        if (rowStatus === status) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

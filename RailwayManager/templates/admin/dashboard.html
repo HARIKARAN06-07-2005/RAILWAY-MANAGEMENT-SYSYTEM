@@ -1,0 +1,344 @@
+{% extends "layout.html" %}
+
+{% block title %} - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-tachometer-alt me-2"></i>Admin Dashboard</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="card dashboard-card bg-primary text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Total Trains</h6>
+                                            <h2 class="display-6 mb-0 counter" data-target="{{ train_count }}">{{ train_count }}</h2>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-train fa-3x opacity-50"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="{{ url_for('admin_trains') }}" class="text-white text-decoration-none">
+                                            <small>View Details <i class="fas fa-arrow-right ms-1"></i></small>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card dashboard-card bg-success text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Stations</h6>
+                                            <h2 class="display-6 mb-0 counter" data-target="{{ station_count }}">{{ station_count }}</h2>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-map-marker-alt fa-3x opacity-50"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="{{ url_for('admin_stations') }}" class="text-white text-decoration-none">
+                                            <small>View Details <i class="fas fa-arrow-right ms-1"></i></small>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card dashboard-card bg-info text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Schedules</h6>
+                                            <h2 class="display-6 mb-0 counter" data-target="{{ schedule_count }}">{{ schedule_count }}</h2>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-calendar-alt fa-3x opacity-50"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="{{ url_for('admin_schedules') }}" class="text-white text-decoration-none">
+                                            <small>View Details <i class="fas fa-arrow-right ms-1"></i></small>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="card dashboard-card bg-warning text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Registered Users</h6>
+                                            <h2 class="display-6 mb-0 counter" data-target="{{ user_count }}">{{ user_count }}</h2>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-users fa-3x opacity-50"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="{{ url_for('admin_passengers') }}" class="text-white text-decoration-none">
+                                            <small>View Details <i class="fas fa-arrow-right ms-1"></i></small>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card dashboard-card bg-danger text-white">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-0">Total Bookings</h6>
+                                            <h2 class="display-6 mb-0 counter" data-target="{{ ticket_count }}">{{ ticket_count }}</h2>
+                                        </div>
+                                        <div>
+                                            <i class="fas fa-ticket-alt fa-3x opacity-50"></i>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <a href="{{ url_for('admin_reports') }}" class="text-white text-decoration-none">
+                                            <small>View Reports <i class="fas fa-arrow-right ms-1"></i></small>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Upcoming Schedules Section -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Upcoming Departures (Next 24 Hours)</h5>
+                                    <a href="{{ url_for('admin_schedules') }}" class="btn btn-sm btn-primary">
+                                        Manage Schedules
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    {% if upcoming_schedules %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Train</th>
+                                                    <th>Route</th>
+                                                    <th>Departure</th>
+                                                    <th>Status</th>
+                                                    <th>Available Seats</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for schedule in upcoming_schedules %}
+                                                <tr>
+                                                    <td>
+                                                        <strong>{{ schedule.train.name }}</strong><br>
+                                                        <small class="text-muted">{{ schedule.train.train_number }}</small>
+                                                    </td>
+                                                    <td>
+                                                        {{ schedule.departure_station.name }} ({{ schedule.departure_station.code }})
+                                                        <i class="fas fa-arrow-right mx-1"></i>
+                                                        {{ schedule.arrival_station.name }} ({{ schedule.arrival_station.code }})
+                                                    </td>
+                                                    <td>
+                                                        {{ format_date(schedule.departure_time) }}<br>
+                                                        <strong>{{ format_time(schedule.departure_time) }}</strong>
+                                                    </td>
+                                                    <td>
+                                                        {% if schedule.status == 'On Time' %}
+                                                        <span class="badge bg-success">{{ schedule.status }}</span>
+                                                        {% elif schedule.status == 'Delayed' %}
+                                                        <span class="badge bg-warning">{{ schedule.status }} ({{ schedule.delay_minutes }} mins)</span>
+                                                        {% else %}
+                                                        <span class="badge bg-danger">{{ schedule.status }}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{ schedule.available_seats }} / {{ schedule.train.total_seats }}</td>
+                                                    <td>
+                                                        <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#updateStatusModal" 
+                                                                data-schedule-id="{{ schedule.id }}" data-status="{{ schedule.status }}"
+                                                                data-delay="{{ schedule.delay_minutes }}">
+                                                            Update Status
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
+                                        <h5>No upcoming schedules in the next 24 hours</h5>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Bookings Section -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Recent Bookings</h5>
+                                    <a href="{{ url_for('admin_reports') }}" class="btn btn-sm btn-primary">
+                                        View All Bookings
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    {% if recent_tickets %}
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>PNR</th>
+                                                    <th>Passenger</th>
+                                                    <th>Train</th>
+                                                    <th>Journey</th>
+                                                    <th>Booking Time</th>
+                                                    <th>Status</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for ticket in recent_tickets %}
+                                                <tr>
+                                                    <td>{{ ticket.pnr }}</td>
+                                                    <td>
+                                                        {{ ticket.passenger_name }}<br>
+                                                        <small class="text-muted">{{ ticket.passenger.username }}</small>
+                                                    </td>
+                                                    <td>
+                                                        {{ ticket.schedule.train.name }}<br>
+                                                        <small class="text-muted">{{ ticket.schedule.train.train_number }}</small>
+                                                    </td>
+                                                    <td>
+                                                        {{ ticket.schedule.departure_station.code }} → {{ ticket.schedule.arrival_station.code }}<br>
+                                                        <small class="text-muted">{{ format_date(ticket.journey_date) }}</small>
+                                                    </td>
+                                                    <td>{{ format_date(ticket.booking_time) }} {{ format_time(ticket.booking_time) }}</td>
+                                                    <td>
+                                                        {% if ticket.status == 'Confirmed' %}
+                                                        <span class="badge bg-success">{{ ticket.status }}</span>
+                                                        {% elif ticket.status == 'Waiting' %}
+                                                        <span class="badge bg-warning">{{ ticket.status }}</span>
+                                                        {% else %}
+                                                        <span class="badge bg-danger">{{ ticket.status }}</span>
+                                                        {% endif %}
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    {% else %}
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-ticket-alt fa-3x mb-3 text-muted"></i>
+                                        <h5>No recent bookings</h5>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1" aria-labelledby="updateStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateStatusModalLabel">Update Train Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin_schedules') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" id="schedule_id_modal" name="schedule_id">
+                    
+                    <div class="mb-3">
+                        <label for="status_modal" class="form-label">Status</label>
+                        <select class="form-select" id="status_modal" name="status" required>
+                            <option value="On Time">On Time</option>
+                            <option value="Delayed">Delayed</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="delay_minutes_container">
+                        <label for="delay_minutes_modal" class="form-label">Delay (minutes)</label>
+                        <input type="number" class="form-control" id="delay_minutes_modal" name="delay_minutes" min="0" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status modal initialization
+        const updateStatusModal = document.getElementById('updateStatusModal');
+        if (updateStatusModal) {
+            updateStatusModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const scheduleId = button.getAttribute('data-schedule-id');
+                const status = button.getAttribute('data-status');
+                const delay = button.getAttribute('data-delay');
+                
+                const scheduleIdInput = document.getElementById('schedule_id_modal');
+                const statusSelect = document.getElementById('status_modal');
+                const delayInput = document.getElementById('delay_minutes_modal');
+                const delayContainer = document.getElementById('delay_minutes_container');
+                
+                scheduleIdInput.value = scheduleId;
+                statusSelect.value = status;
+                delayInput.value = delay;
+                
+                // Show/hide delay field based on status
+                if (status === 'Delayed') {
+                    delayContainer.style.display = 'block';
+                } else {
+                    delayContainer.style.display = 'none';
+                }
+                
+                // Add event listener to status select
+                statusSelect.addEventListener('change', function() {
+                    if (this.value === 'Delayed') {
+                        delayContainer.style.display = 'block';
+                    } else {
+                        delayContainer.style.display = 'none';
+                        delayInput.value = 0;
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,180 @@
+{% extends "layout.html" %}
+
+{% block title %} - Train Schedule{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Train Schedule</h3>
+                </div>
+                <div class="card-body schedule-search-form">
+                    <form action="{{ url_for('schedule') }}" method="get" id="searchForm">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="from" class="form-label">From Station</label>
+                                <select class="form-select" id="from" name="from" required>
+                                    <option value="" selected disabled>Select departure station</option>
+                                    {% for station in stations %}
+                                    <option value="{{ station.id }}" {% if from_station and from_station|string == station.id|string %}selected{% endif %}>
+                                        {{ station.name }} ({{ station.code }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div id="from-error" class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="to" class="form-label">To Station</label>
+                                <select class="form-select" id="to" name="to" required>
+                                    <option value="" selected disabled>Select arrival station</option>
+                                    {% for station in stations %}
+                                    <option value="{{ station.id }}" {% if to_station and to_station|string == station.id|string %}selected{% endif %}>
+                                        {{ station.name }} ({{ station.code }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div id="to-error" class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="date" class="form-label">Journey Date</label>
+                                <input type="date" class="form-control" id="date" name="date" value="{{ date }}" required>
+                                <div id="date-error" class="invalid-feedback"></div>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            {% if schedules %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Found <strong>{{ schedules|length }}</strong> train(s) from <strong>{{ schedules[0].departure_station.name }}</strong> to <strong>{{ schedules[0].arrival_station.name }}</strong> on <strong>{{ format_date(date) }}</strong>
+            </div>
+            
+            {% for schedule in schedules %}
+            <div class="card mb-3 train-card">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <h4>{{ schedule.train.name }}</h4>
+                            <p class="text-muted mb-0">{{ schedule.train.train_number }}</p>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <p class="mb-0"><strong>{{ format_time(schedule.departure_time) }}</strong></p>
+                                    <p class="mb-0">{{ schedule.departure_station.name }}</p>
+                                    <small>Platform: {{ schedule.platform }}</small>
+                                </div>
+                                <div class="px-3">
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0"><strong>{{ format_time(schedule.arrival_time) }}</strong></p>
+                                    <p class="mb-0">{{ schedule.arrival_station.name }}</p>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>{{ format_date(schedule.departure_time) }}</span>
+                                <span>{{ (schedule.arrival_time - schedule.departure_time).seconds // 60 // 60 }}h {{ ((schedule.arrival_time - schedule.departure_time).seconds // 60) % 60 }}m</span>
+                                <span>{{ format_date(schedule.arrival_time) }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <p class="mb-1"><i class="fas fa-map-marker-alt me-2"></i>{{ schedule.distance }} km</p>
+                            <p class="mb-1"><i class="fas fa-chair me-2"></i>{{ schedule.available_seats }} available</p>
+                            <p class="mb-0">
+                                {% if schedule.status == 'On Time' %}
+                                <span class="badge bg-success">{{ schedule.status }}</span>
+                                {% elif schedule.status == 'Delayed' %}
+                                <span class="badge bg-warning">{{ schedule.status }} ({{ schedule.delay_minutes }} mins)</span>
+                                {% else %}
+                                <span class="badge bg-danger">{{ schedule.status }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-3 text-md-end">
+                            <h4 class="text-primary mb-3">₹{{ schedule.price }}</h4>
+                            <a href="{{ url_for('booking', schedule_id=schedule.id) }}" class="btn btn-primary">
+                                <i class="fas fa-ticket-alt me-2"></i>Book Now
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i>
+                            <span data-bs-toggle="tooltip" data-bs-placement="top" title="Train Amenities">
+                                {{ schedule.train.amenities or 'No amenities information available' }}
+                            </span>
+                        </small>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#trainDetails{{ schedule.id }}">
+                            Train Details <i class="fas fa-chevron-down ms-1"></i>
+                        </button>
+                    </div>
+                    <div class="collapse mt-3" id="trainDetails{{ schedule.id }}">
+                        <div class="card card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Train Information</h5>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Train Number:</strong> {{ schedule.train.train_number }}</li>
+                                        <li><strong>Total Seats:</strong> {{ schedule.train.total_seats }}</li>
+                                        <li><strong>Coach Count:</strong> {{ schedule.train.coach_count }}</li>
+                                        <li><strong>Available Seats:</strong> {{ schedule.available_seats }}</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Journey Information</h5>
+                                    <ul class="list-unstyled">
+                                        <li><strong>Departure:</strong> {{ format_date(schedule.departure_time) }} {{ format_time(schedule.departure_time) }}</li>
+                                        <li><strong>Arrival:</strong> {{ format_date(schedule.arrival_time) }} {{ format_time(schedule.arrival_time) }}</li>
+                                        <li><strong>Distance:</strong> {{ schedule.distance }} km</li>
+                                        <li><strong>Platform:</strong> {{ schedule.platform }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% elif from_station and to_station and date %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                No trains found for the selected route and date. Please try different stations or dates.
+            </div>
+            <div class="text-center py-5">
+                <i class="fas fa-train fa-5x mb-3 text-muted"></i>
+                <h4>No Trains Available</h4>
+                <p class="text-muted">We couldn't find any trains for your search criteria.</p>
+                <p>Try selecting different stations or a different date.</p>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                Please select stations and date to find trains.
+            </div>
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-5x mb-3 text-muted"></i>
+                <h4>Search for Trains</h4>
+                <p class="text-muted">Use the search form above to find trains for your journey.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

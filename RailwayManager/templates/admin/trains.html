@@ -1,0 +1,302 @@
+{% extends "layout.html" %}
+
+{% block title %} - Manage Trains{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h3 class="mb-0"><i class="fas fa-train me-2"></i>Manage Trains</h3>
+                    <button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#addTrainModal">
+                        <i class="fas fa-plus me-2"></i>Add New Train
+                    </button>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchTable" placeholder="Search trains...">
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex justify-content-md-end">
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-primary active filter-btn" data-filter="all">All</button>
+                                <button type="button" class="btn btn-outline-success filter-btn" data-filter="active">Active</button>
+                                <button type="button" class="btn btn-outline-danger filter-btn" data-filter="inactive">Inactive</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Trains Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th data-sort="id">#</th>
+                                    <th data-sort="name">Train Name</th>
+                                    <th data-sort="number">Train Number</th>
+                                    <th data-sort="seats">Total Seats</th>
+                                    <th data-sort="coaches">Coaches</th>
+                                    <th data-sort="status">Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for train in trains %}
+                                <tr data-status="{{ 'active' if train.active else 'inactive' }}">
+                                    <td>{{ train.id }}</td>
+                                    <td>{{ train.name }}</td>
+                                    <td>{{ train.train_number }}</td>
+                                    <td>{{ train.total_seats }}</td>
+                                    <td>{{ train.coach_count }}</td>
+                                    <td>
+                                        {% if train.active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary edit-train-btn" 
+                                                data-bs-toggle="modal" data-bs-target="#editTrainModal"
+                                                data-id="{{ train.id }}"
+                                                data-name="{{ train.name }}"
+                                                data-number="{{ train.train_number }}"
+                                                data-seats="{{ train.total_seats }}"
+                                                data-coaches="{{ train.coach_count }}"
+                                                data-amenities="{{ train.amenities }}"
+                                                data-active="{{ train.active }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-btn"
+                                                data-bs-toggle="modal" data-bs-target="#deleteTrainModal"
+                                                data-id="{{ train.id }}"
+                                                data-name="{{ train.name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Train Modal -->
+<div class="modal fade" id="addTrainModal" tabindex="-1" aria-labelledby="addTrainModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTrainModalLabel">Add New Train</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="trainForm" action="{{ url_for('admin_trains') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="add">
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Train Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                        <div id="name-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="train_number" class="form-label">Train Number</label>
+                        <input type="text" class="form-control" id="train_number" name="train_number" required>
+                        <div id="train_number-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="total_seats" class="form-label">Total Seats</label>
+                            <input type="number" class="form-control" id="total_seats" name="total_seats" min="1" required>
+                            <div id="total_seats-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="coach_count" class="form-label">Number of Coaches</label>
+                            <input type="number" class="form-control" id="coach_count" name="coach_count" min="1" required>
+                            <div id="coach_count-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="amenities" class="form-label">Amenities</label>
+                        <textarea class="form-control" id="amenities" name="amenities" rows="3" placeholder="Wi-Fi, Charging Points, Food Service, etc."></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="active" name="active" checked>
+                        <label class="form-check-label" for="active">
+                            Active
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Train</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Train Modal -->
+<div class="modal fade" id="editTrainModal" tabindex="-1" aria-labelledby="editTrainModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTrainModalLabel">Edit Train</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editTrainForm" action="{{ url_for('admin_trains') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="edit">
+                    <input type="hidden" id="edit_train_id" name="train_id">
+                    
+                    <div class="mb-3">
+                        <label for="edit_name" class="form-label">Train Name</label>
+                        <input type="text" class="form-control" id="edit_name" name="name" required>
+                        <div id="edit_name-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_train_number" class="form-label">Train Number</label>
+                        <input type="text" class="form-control" id="edit_train_number" name="train_number" required>
+                        <div id="edit_train_number-error" class="invalid-feedback"></div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_total_seats" class="form-label">Total Seats</label>
+                            <input type="number" class="form-control" id="edit_total_seats" name="total_seats" min="1" required>
+                            <div id="edit_total_seats-error" class="invalid-feedback"></div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="edit_coach_count" class="form-label">Number of Coaches</label>
+                            <input type="number" class="form-control" id="edit_coach_count" name="coach_count" min="1" required>
+                            <div id="edit_coach_count-error" class="invalid-feedback"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="edit_amenities" class="form-label">Amenities</label>
+                        <textarea class="form-control" id="edit_amenities" name="amenities" rows="3" placeholder="Wi-Fi, Charging Points, Food Service, etc."></textarea>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="edit_active" name="active">
+                        <label class="form-check-label" for="edit_active">
+                            Active
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Train Modal -->
+<div class="modal fade" id="deleteTrainModal" tabindex="-1" aria-labelledby="deleteTrainModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteTrainModalLabel">Delete Train</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the train <strong id="delete_train_name"></strong>?</p>
+                <p class="text-danger">This action cannot be undone. Any schedules associated with this train will be affected.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('admin_trains') }}" method="post">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" id="delete_train_id" name="train_id">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize edit train modal
+        const editButtons = document.querySelectorAll('.edit-train-btn');
+        editButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                const number = this.getAttribute('data-number');
+                const seats = this.getAttribute('data-seats');
+                const coaches = this.getAttribute('data-coaches');
+                const amenities = this.getAttribute('data-amenities');
+                const active = this.getAttribute('data-active') === 'True';
+                
+                document.getElementById('edit_train_id').value = id;
+                document.getElementById('edit_name').value = name;
+                document.getElementById('edit_train_number').value = number;
+                document.getElementById('edit_total_seats').value = seats;
+                document.getElementById('edit_coach_count').value = coaches;
+                document.getElementById('edit_amenities').value = amenities;
+                document.getElementById('edit_active').checked = active;
+            });
+        });
+        
+        // Initialize delete train modal
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                
+                document.getElementById('delete_train_id').value = id;
+                document.getElementById('delete_train_name').textContent = name;
+            });
+        });
+        
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                const rows = document.querySelectorAll('tbody tr');
+                
+                // Remove active class from all buttons
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+                
+                rows.forEach(row => {
+                    if (filter === 'all') {
+                        row.style.display = '';
+                    } else {
+                        const status = row.getAttribute('data-status');
+                        if (status === filter) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

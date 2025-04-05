@@ -1,0 +1,243 @@
+{% extends "layout.html" %}
+
+{% block title %} - Manage Passengers{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-users me-2"></i>Manage Passengers</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Search and Filter -->
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="searchTable" placeholder="Search passengers...">
+                            </div>
+                        </div>
+                        <div class="col-md-6 d-flex justify-content-md-end">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Export
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#">Export as CSV</a></li>
+                                    <li><a class="dropdown-item" href="#">Export as Excel</a></li>
+                                    <li><a class="dropdown-item" href="#">Export as PDF</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Passengers Table -->
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th data-sort="id">#</th>
+                                    <th data-sort="username">Username</th>
+                                    <th data-sort="name">Full Name</th>
+                                    <th data-sort="email">Email</th>
+                                    <th data-sort="phone">Phone</th>
+                                    <th data-sort="joined">Joined</th>
+                                    <th data-sort="tickets">Tickets</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ user.id }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.full_name }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.phone or 'Not provided' }}</td>
+                                    <td>{{ format_date(user.created_at) }}</td>
+                                    <td>{{ user.tickets|length }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary view-passenger-btn"
+                                                data-bs-toggle="modal" data-bs-target="#viewPassengerModal"
+                                                data-id="{{ user.id }}"
+                                                data-username="{{ user.username }}"
+                                                data-name="{{ user.full_name }}"
+                                                data-email="{{ user.email }}"
+                                                data-phone="{{ user.phone }}"
+                                                data-joined="{{ format_date(user.created_at) }}"
+                                                data-tickets="{{ user.tickets|length }}">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning reset-password-btn"
+                                                data-bs-toggle="modal" data-bs-target="#resetPasswordModal"
+                                                data-id="{{ user.id }}"
+                                                data-name="{{ user.full_name }}">
+                                            <i class="fas fa-key"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Passenger Modal -->
+<div class="modal fade" id="viewPassengerModal" tabindex="-1" aria-labelledby="viewPassengerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewPassengerModalLabel">Passenger Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h5>User Information</h5>
+                        <table class="table">
+                            <tr>
+                                <th>Username:</th>
+                                <td id="view_username"></td>
+                            </tr>
+                            <tr>
+                                <th>Full Name:</th>
+                                <td id="view_name"></td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td id="view_email"></td>
+                            </tr>
+                            <tr>
+                                <th>Phone:</th>
+                                <td id="view_phone"></td>
+                            </tr>
+                            <tr>
+                                <th>Joined On:</th>
+                                <td id="view_joined"></td>
+                            </tr>
+                            <tr>
+                                <th>Total Bookings:</th>
+                                <td id="view_tickets"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Recent Bookings</h5>
+                        <div id="recent_bookings">
+                            <div class="text-center py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Loading recent bookings...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reset Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('admin_passengers') }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="reset_password">
+                    <input type="hidden" id="reset_user_id" name="user_id">
+                    
+                    <p>Are you sure you want to reset the password for <strong id="reset_user_name"></strong>?</p>
+                    <p>A new random password will be generated and sent to the user's email address.</p>
+                    
+                    <div class="mb-3">
+                        <label for="admin_password" class="form-label">Confirm your admin password</label>
+                        <input type="password" class="form-control" id="admin_password" name="admin_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning">Reset Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize view passenger modal
+        const viewButtons = document.querySelectorAll('.view-passenger-btn');
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const username = this.getAttribute('data-username');
+                const name = this.getAttribute('data-name');
+                const email = this.getAttribute('data-email');
+                const phone = this.getAttribute('data-phone') || 'Not provided';
+                const joined = this.getAttribute('data-joined');
+                const tickets = this.getAttribute('data-tickets');
+                
+                document.getElementById('view_username').textContent = username;
+                document.getElementById('view_name').textContent = name;
+                document.getElementById('view_email').textContent = email;
+                document.getElementById('view_phone').textContent = phone;
+                document.getElementById('view_joined').textContent = joined;
+                document.getElementById('view_tickets').textContent = tickets;
+                
+                // Here you would normally load recent bookings via AJAX
+                // For this example, we'll just simulate it
+                setTimeout(() => {
+                    const bookingsHTML = tickets > 0 ? 
+                        `<div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            This would normally show the user's recent bookings loaded via AJAX.
+                        </div>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Example Train</strong>
+                                    <p class="mb-0 small">DEL → MUM • 12 Oct, 2023</p>
+                                </div>
+                                <span class="badge bg-success">Confirmed</span>
+                            </li>
+                        </ul>` :
+                        `<div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            No bookings found for this user.
+                        </div>`;
+                    
+                    document.getElementById('recent_bookings').innerHTML = bookingsHTML;
+                }, 1000);
+            });
+        });
+        
+        // Initialize reset password modal
+        const resetButtons = document.querySelectorAll('.reset-password-btn');
+        resetButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const name = this.getAttribute('data-name');
+                
+                document.getElementById('reset_user_id').value = id;
+                document.getElementById('reset_user_name').textContent = name;
+            });
+        });
+    });
+</script>
+{% endblock %}
